@@ -4,7 +4,7 @@
 # ================================
 
 # Your Finnhub API key (from finnhub.io dashboard)
-FINNHUB_API_KEY = "YOUR_FINNHUB_API_KEY"
+FINNHUB_API_KEY = ""
 
 # Symbol for XAUUSD in Finnhub format
 # Make sure this matches the broker's available symbols
