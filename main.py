@@ -17,7 +17,7 @@ app = FastAPI(
 # Database Setup
 # ---------------------------------------------
 os.makedirs("data", exist_ok=True)
-DB_PATH = config.DB_FILE
+DB_PATH = DB_FILE
 
 def get_db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -44,9 +44,9 @@ init_db()
 # Fetch & Save Finnhub Candle
 # ---------------------------------------------
 def fetch_and_store_gold():
-    FINNHUB_KEY = config.FINNHUB_API_KEY
-    symbol = config.SYMBOL
-    interval = config.INTERVAL
+    FINNHUB_KEY = FINNHUB_API_KEY
+    symbol = SYMBOL
+    interval = INTERVAL
 
     url = (
         f"https://finnhub.io/api/v1/forex/candle"
