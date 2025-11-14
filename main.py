@@ -5,9 +5,8 @@ import threading
 import time
 from datetime import datetime
 import os
+from finnhub_service.config import FINNHUB_API_KEY, SYMBOL, INTERVAL, DB_FILE
 
-# Load constants from config.py
-import config
 
 app = FastAPI(
     title="Finnhub Gold Auto Collector",
