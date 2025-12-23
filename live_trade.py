@@ -24,7 +24,7 @@ class LiveScalpingTrader:
         
         # Trading parameters
         self.symbol = SYMBOL
-        self.lot_size = 0.01
+        self.lot_size = 0.001
         self.magic_number = 234000
         self.slippage = 10
         
@@ -51,6 +51,81 @@ class LiveScalpingTrader:
         
         # Performance tracking
         self.trades_log = []
+
+        # Don't set lot_size here, calculate it dynamically
+        self.risk_percent = 1.0  # Risk 1% per trade
+
+    def calculate_lot_size(self):
+        """Calculate position size based on account balance"""
+        account_info = mt5.account_info()
+        if account_info is None:
+            return 0.01
+        
+        balance = account_info.balance
+        free_margin = account_info.margin_free
+        
+        # Calculate based on balance
+        if balance < 100:
+            return 0.001  # Micro lot
+        elif balance < 1000:
+            return 0.01   # Mini lot
+        elif balance < 10000:
+            return 0.1    # Standard lot
+        else:
+            # Risk-based sizing
+            risk_amount = balance * (self.risk_percent / 100)
+            lot_size = risk_amount / (self.stop_loss_pips * 10)  # 10 = pip value
+            return min(max(0.001, lot_size), 1.0)  # Between 0.001 and 1.0
+    
+    def open_position(self, signal, prediction_proba):
+        """Open a trading position with SL/TP"""
+        symbol_info = mt5.symbol_info(self.symbol)
+        if symbol_info is None:
+            return False
+        
+        if not self.can_trade():
+            return False
+        
+        # Calculate lot size dynamically
+        lot_size = self.calculate_lot_size()
+        
+        # Prepare order
+        order_type = mt5.ORDER_TYPE_BUY if signal == 'BUY' else mt5.ORDER_TYPE_SELL
+        price = symbol_info.ask if signal == 'BUY' else symbol_info.bid
+        
+        # Calculate SL/TP
+        sl, tp = self.calculate_sl_tp(order_type, price)
+        
+        # Create order request
+        request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "symbol": self.symbol,
+            "volume": lot_size,  # Use calculated lot size
+            "type": order_type,
+            "price": price,
+            "sl": sl,
+            "tp": tp,
+            "deviation": self.slippage,
+            "magic": self.magic_number,
+            "comment": f"ML_{signal}_{prediction_proba:.2f}",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_IOC,
+        }
+        
+        # Get account info for logging
+        account_info = mt5.account_info()
+        
+        print(f"\n{'='*60}")
+        print(f"🔔 OPENING {signal} POSITION")
+        print(f"{'='*60}")
+        print(f"Account Balance: ${account_info.balance:,.2f}")
+        print(f"Free Margin: ${account_info.margin_free:,.2f}")
+        print(f"Lot Size: {lot_size}")
+        print(f"Probability: {prediction_proba:.2%}")
+        print(f"Entry: {price:.2f}")
+        print(f"Stop Loss: {sl:.2f} ({self.stop_loss_pips} pips)")
+        print(f"Take Profit: {tp:.2f} ({self.take_profit_pips} pips)")
+        print(f"Risk/Reward: 1:{self.take_profit_pips/self.stop_loss_pips:.1f}")
         
     def connect_mt5(self):
         """Connect to MT5"""
@@ -296,7 +371,7 @@ class LiveScalpingTrader:
         
         os.makedirs('logs', exist_ok=True)
         df = pd.DataFrame(self.trades_log)
-        df.to_csv('logs/live_trades.csv', index=False)
+        df.to_csv('./logs/live_trades.csv', index=False)
     
     def reset_daily_stats(self):
         """Reset daily statistics"""
