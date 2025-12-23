@@ -418,9 +418,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Backtest scalping strategy')
-    parser.add_argument('--balance', type=float, default=10, help='Initial balance')
-    parser.add_argument('--lot-size', type=float, default=0.001, help='Position size')
-    parser.add_argument('--threshold', type=float, default=0.7, help='Prediction threshold')
+    parser.add_argument('--balance', type=float, default=100, help='Initial balance')
+    parser.add_argument('--lot-size', type=float, default=0.01, help='Position size')
+    parser.add_argument('--threshold', type=float, default=0.5, help='Prediction threshold')
     args = parser.parse_args()
 
     # Find latest model

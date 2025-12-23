@@ -34,7 +34,7 @@ class LiveScalpingTrader:
         self.take_profit_pips = 15
         self.trailing_stop_pips = 8  # Trailing stop
         self.max_daily_loss = 100
-        self.max_daily_trades = 20
+        self.max_daily_trades = 1440
         
         # Trading signals
         self.prediction_threshold = 0.5
