@@ -26,7 +26,7 @@ class ScalpingBacktest:
         self.balance = initial_balance
         
         # Trading parameters
-        self.position_size = 0.001  # 0.01 lot = 1 oz of gold
+        self.position_size = 0.1  # 0.01 lot = 1 oz of gold
         self.pip_value = 0.01  # 1 pip = $0.01 for XAU/USD
         self.spread_cost = 0.5  # average spread in pips
         self.commission = 0  # commission per trade
@@ -276,7 +276,7 @@ class ScalpingBacktest:
         plt.show()
 
 
-def run_backtest(model_path, feature_cols_path, prediction_threshold=0.5):
+def run_backtest(model_path, feature_cols_path, prediction_threshold=0.6):
     """Run backtest with latest model"""
     
     # Load data
@@ -288,7 +288,7 @@ def run_backtest(model_path, feature_cols_path, prediction_threshold=0.5):
     print(f"Ticks: {len(ticks)}")
     
     # Initialize backtester
-    backtester = ScalpingBacktest(model_path, feature_cols_path, initial_balance=10)
+    backtester = ScalpingBacktest(model_path, feature_cols_path, initial_balance=100)
     
     # Run backtest
     results = backtester.run(
@@ -308,9 +308,9 @@ def run_backtest(model_path, feature_cols_path, prediction_threshold=0.5):
     return backtester, results
 
 def run_backtest_small_account(model_path, feature_cols_path, 
-                                initial_balance=10, 
-                                lot_size=0.001,
-                                prediction_threshold=0.7):
+                                initial_balance=100,
+                                lot_size=0.1,
+                                prediction_threshold=0.6):
     """
     Run backtest optimized for small accounts
     """
@@ -418,8 +418,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Backtest scalping strategy')
-    parser.add_argument('--balance', type=float, default=10, help='Initial balance')
-    parser.add_argument('--lot-size', type=float, default=0.001, help='Position size')
+    parser.add_argument('--balance', type=float, default=100, help='Initial balance')
+    parser.add_argument('--lot-size', type=float, default=0.1, help='Position size')
     parser.add_argument('--threshold', type=float, default=0.7, help='Prediction threshold')
     args = parser.parse_args()
 
