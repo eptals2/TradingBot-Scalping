@@ -37,7 +37,7 @@ class LiveScalpingTrader:
         self.max_daily_trades = 20
         
         # Trading signals
-        self.prediction_threshold = 0.5
+        self.prediction_threshold = 0.2
         self.min_data_points = 100
         
         # Signal validation (use Parabolic SAR for confirmation)

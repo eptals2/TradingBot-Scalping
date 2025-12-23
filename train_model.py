@@ -177,9 +177,7 @@ def train_scalping_model(
         if acc > best_score:
             best_score = acc
             best_model = model
-
-        print(f"\nNew best model: {best_model}")
-
+    
     print("\n" + "="*60)
     print("FINAL RESULTS")
     print("="*60)
