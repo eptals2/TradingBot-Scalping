@@ -11,7 +11,7 @@ from utils.sqlite_store import get_all_candles, get_all_ticks
 from features.combined_features import create_all_features
 
 class ScalpingBacktest:
-    def __init__(self, model_path, feature_cols_path, initial_balance=10000):
+    def __init__(self, model_path, feature_cols_path, initial_balance=100):
         """
         Initialize backtester
         
@@ -26,7 +26,7 @@ class ScalpingBacktest:
         self.balance = initial_balance
         
         # Trading parameters
-        self.position_size = 0.01  # 0.01 lot = 1 oz of gold
+        self.position_size = 0.001  # 0.01 lot = 1 oz of gold
         self.pip_value = 0.01  # 1 pip = $0.01 for XAU/USD
         self.spread_cost = 0.5  # average spread in pips
         self.commission = 0  # commission per trade
@@ -288,7 +288,7 @@ def run_backtest(model_path, feature_cols_path, prediction_threshold=0.5):
     print(f"Ticks: {len(ticks)}")
     
     # Initialize backtester
-    backtester = ScalpingBacktest(model_path, feature_cols_path, initial_balance=10000)
+    backtester = ScalpingBacktest(model_path, feature_cols_path, initial_balance=10)
     
     # Run backtest
     results = backtester.run(
@@ -307,8 +307,122 @@ def run_backtest(model_path, feature_cols_path, prediction_threshold=0.5):
     
     return backtester, results
 
+def run_backtest_small_account(model_path, feature_cols_path, 
+                                initial_balance=10, 
+                                lot_size=0.001,
+                                prediction_threshold=0.7):
+    """
+    Run backtest optimized for small accounts
+    """
+    
+    print(f"\n{'='*60}")
+    print(f"SMALL ACCOUNT BACKTEST")
+    print(f"{'='*60}")
+    print(f"Initial Balance: ${initial_balance:.2f}")  # Show what was passed
+    print(f"Lot Size: {lot_size}")
+    print(f"Threshold: {prediction_threshold}")
+    
+    # Load data
+    print("\nLoading data...")
+    candles = get_all_candles()
+    ticks = get_all_ticks()
+    
+    print(f"Candles: {len(candles)}")
+    print(f"Ticks: {len(ticks)}")
+    
+    # Initialize backtester with CORRECT initial balance
+    backtester = ScalpingBacktest(
+        model_path, 
+        feature_cols_path, 
+        initial_balance=initial_balance  # This is the FIX
+    )
+    
+    # Set position size and pip value based on lot size
+    backtester.position_size = lot_size
+    
+    if lot_size == 0.001:
+        backtester.pip_value = 0.001  # $0.001 per pip for micro lot
+    elif lot_size == 0.01:
+        backtester.pip_value = 0.01   # $0.01 per pip for mini lot
+    elif lot_size == 0.1:
+        backtester.pip_value = 0.1    # $0.10 per pip
+    else:
+        backtester.pip_value = lot_size * 1.0  # General formula
+    
+    # Run backtest
+    results = backtester.run(
+        candles, 
+        ticks,
+        prediction_threshold=prediction_threshold,
+        holding_periods=1
+    )
+    
+    # Print results
+    backtester.print_results(results)
+    
+    if results and len(backtester.trades) > 0:
+        # Additional analysis for small accounts
+        print(f"\n{'='*60}")
+        print("SMALL ACCOUNT ANALYSIS")
+        print(f"{'='*60}")
+        
+        trades_df = results['trades_df']
+        
+        # Calculate growth
+        growth = ((results['final_balance'] - initial_balance) / initial_balance) * 100
+        print(f"Account Growth: {growth:+.2f}%")
+        
+        # Actual profit in dollars
+        print(f"Profit: ${results['total_pnl']:.2f}")
+        print(f"Starting: ${initial_balance:.2f} → Ending: ${results['final_balance']:.2f}")
+        
+        # Risk analysis
+        max_loss = trades_df['pnl'].min()
+        max_win = trades_df['pnl'].max()
+        print(f"\nLargest Win: ${max_win:.4f}")
+        print(f"Largest Loss: ${max_loss:.4f}")
+        print(f"Average Trade: ${trades_df['pnl'].mean():.4f}")
+        
+        # Time to double account (if profitable)
+        if results['roi'] > 0:
+            time_span = (trades_df['exit_time'].max() - trades_df['entry_time'].min())
+            days = time_span.days if time_span.days > 0 else 1
+            
+            trades_per_day = len(trades_df) / days
+            daily_roi = results['roi'] / days
+            days_to_double = 100 / daily_roi if daily_roi > 0 else float('inf')
+            
+            print(f"\n📊 Projections:")
+            print(f"  Trading period: {days} days")
+            print(f"  Avg trades/day: {trades_per_day:.1f}")
+            print(f"  Daily ROI: {daily_roi:.2f}%")
+            
+            if days_to_double < 365:
+                print(f"  Days to double: {days_to_double:.0f} days")
+                print(f"  Months to double: {days_to_double/30:.1f} months")
+            else:
+                print(f"  Days to double: Not achievable at current rate")
+        
+        # Monthly projection
+        if time_span.days > 0:
+            monthly_roi = (results['roi'] / days) * 30
+            print(f"  Estimated monthly ROI: {monthly_roi:.2f}%")
+        
+        # Plot results
+        backtester.plot_results(results)
+    
+    return backtester, results
 
 if __name__ == "__main__":
+    import glob
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Backtest scalping strategy')
+    parser.add_argument('--balance', type=float, default=10, help='Initial balance')
+    parser.add_argument('--lot-size', type=float, default=0.001, help='Position size')
+    parser.add_argument('--threshold', type=float, default=0.7, help='Prediction threshold')
+    args = parser.parse_args()
+
     # Find latest model
     models = glob.glob('models/scalping_model_*.pkl')
     if not models:
@@ -342,17 +456,26 @@ if __name__ == "__main__":
     
     print(f"Using model: {latest_model}")
     print(f"Using features: {feature_cols}")
+
+    # Run backtest
+    backtester, results = run_backtest_small_account(
+        latest_model, 
+        feature_cols,
+        initial_balance=args.balance,
+        lot_size=args.lot_size,
+        prediction_threshold=args.threshold
+    )
     
     # Run backtest with different thresholds
-    print("\n" + "="*60)
-    print("TESTING DIFFERENT PREDICTION THRESHOLDS")
-    print("="*60)
+    # print("\n" + "="*60)
+    # print("TESTING DIFFERENT PREDICTION THRESHOLDS")
+    # print("="*60)
     
-    for threshold in [0.4, 0.5, 0.6, 0.7]:
-        print(f"\n{'='*60}")
-        print(f"Threshold: {threshold}")
-        print(f"{'='*60}")
-        backtester, results = run_backtest(latest_model, feature_cols, prediction_threshold=threshold)
+    # for threshold in [0.4, 0.5, 0.6, 0.7]:
+    #     print(f"\n{'='*60}")
+    #     print(f"Threshold: {threshold}")
+    #     print(f"{'='*60}")
+    #     backtester, results = run_backtest(latest_model, feature_cols, prediction_threshold=threshold)
         
-        if results:
-            print(f"\n✓ Threshold {threshold}: ROI = {results['roi']:.2f}%, Win Rate = {results['win_rate']:.2f}%")
+    #     if results:
+    #         print(f"\n✓ Threshold {threshold}: ROI = {results['roi']:.2f}%, Win Rate = {results['win_rate']:.2f}%")

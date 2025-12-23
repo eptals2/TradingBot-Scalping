@@ -24,7 +24,7 @@ class LiveScalpingTrader:
         
         # Trading parameters
         self.symbol = SYMBOL
-        self.lot_size = 0.001
+        self.lot_size = 0.01
         self.magic_number = 234000
         self.slippage = 10
         
@@ -34,10 +34,10 @@ class LiveScalpingTrader:
         self.take_profit_pips = 15
         self.trailing_stop_pips = 8  # Trailing stop
         self.max_daily_loss = 100
-        self.max_daily_trades = 10
+        self.max_daily_trades = 20
         
         # Trading signals
-        self.prediction_threshold = 0.6
+        self.prediction_threshold = 0.2
         self.min_data_points = 100
         
         # Signal validation (use Parabolic SAR for confirmation)
