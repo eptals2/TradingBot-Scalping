@@ -26,7 +26,7 @@ class ScalpingBacktest:
         self.balance = initial_balance
         
         # Trading parameters
-        self.position_size = 0.1  # 0.01 lot = 1 oz of gold
+        self.position_size = 0.01  # 0.01 lot = 1 oz of gold
         self.pip_value = 0.01  # 1 pip = $0.01 for XAU/USD
         self.spread_cost = 0.5  # average spread in pips
         self.commission = 0  # commission per trade
@@ -79,7 +79,7 @@ class ScalpingBacktest:
         
         return trade
     
-    def run(self, candles_df, ticks_df=None, prediction_threshold=0.5, holding_periods=1):
+    def run(self, candles_df, ticks_df=None, prediction_threshold=0.38, holding_periods=1):
         """
         Run backtest
         
@@ -309,8 +309,8 @@ def run_backtest(model_path, feature_cols_path, prediction_threshold=0.6):
 
 def run_backtest_small_account(model_path, feature_cols_path, 
                                 initial_balance=100,
-                                lot_size=0.1,
-                                prediction_threshold=0.6):
+                                lot_size=0.01,
+                                prediction_threshold=0.38):
     """
     Run backtest optimized for small accounts
     """
@@ -419,8 +419,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Backtest scalping strategy')
     parser.add_argument('--balance', type=float, default=100, help='Initial balance')
-    parser.add_argument('--lot-size', type=float, default=0.1, help='Position size')
-    parser.add_argument('--threshold', type=float, default=0.7, help='Prediction threshold')
+    parser.add_argument('--lot-size', type=float, default=0.01, help='Position size')
+    parser.add_argument('--threshold', type=float, default=0.38, help='Prediction threshold')
     args = parser.parse_args()
 
     # Find latest model
