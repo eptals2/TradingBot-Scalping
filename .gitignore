@@ -1,3 +1,4 @@
 .env
 __pycache__
 logs
+live_trades.csv
