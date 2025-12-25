@@ -1,10 +1,9 @@
 # live_trade.py (ENHANCED WITH BUY/SELL SIGNALS)
 import MetaTrader5 as mt5
 import pandas as pd
-import numpy as np
 import joblib
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 import glob
 
@@ -65,12 +64,12 @@ class LiveScalpingTrader:
         free_margin = account_info.margin_free
         
         # Calculate based on balance
-        if balance < 100:
-            return 0.001  # Micro lot
-        elif balance < 1000:
-            return 0.01   # Mini lot
-        elif balance < 10000:
-            return 0.1    # Standard lot
+        if balance < 100 and free_margin < 100:
+            return 0.01  # Mini lot
+        elif balance < 1000 and free_margin < 1000:
+            return 0.1   # Standard
+        elif balance < 10000 and free_margin < 10000:
+            return 0.5  
         else:
             # Risk-based sizing
             risk_amount = balance * (self.risk_percent / 100)
@@ -369,9 +368,9 @@ class LiveScalpingTrader:
         """Log trade to file"""
         self.trades_log.append(trade_info)
         
-        os.makedirs('logs', exist_ok=True)
+        os.makedirs('__logs', exist_ok=True)
         df = pd.DataFrame(self.trades_log)
-        df.to_csv('./logs/live_trades.csv', index=False)
+        df.to_csv('./__logs/live_trades.csv', index=False)
     
     def reset_daily_stats(self):
         """Reset daily statistics"""
