@@ -1,5 +1,5 @@
-# TradingBot-Scalping
+# TradingBot-Gold-Scalping
 
-this just a practice app for training and automating scalping trading
+Built a model for automating GOLD scalping trading
 
 # Use at your own risk...no profit gurantee
